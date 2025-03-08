@@ -16,10 +16,16 @@ from trajectory import *
 #from data_loader import load_data
 from python_executor import PythonExecutor
 from model_utils import load_hf_lm_and_tokenizer, generate_completions
+import sys
+# Add root directory to system path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(root_dir)
 from vlmeval.config import supported_VLM
 
-gsm8k_correct =[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 160, 161, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208]
-math_correct = [0, 1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 99, 100, 101, 104, 105, 106, 107, 108, 109, 111, 112, 113, 115, 116, 117, 120, 121, 122, 123, 125, 126, 127, 128, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 188, 189, 190, 191, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 210, 211, 212, 213, 214, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225]
+# gsm8k_correct =[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 160, 161, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208]
+# math_correct = [0, 1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 99, 100, 101, 104, 105, 106, 107, 108, 109, 111, 112, 113, 115, 116, 117, 120, 121, 122, 123, 125, 126, 127, 128, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 188, 189, 190, 191, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 210, 211, 212, 213, 214, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225]
+gsm8k_correct = []
+math_correct = []
 
 import os
 import json
@@ -45,7 +51,7 @@ anthropic = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
 def generate_adversarial_problem(model, question: str, model_answer: str, gt: str) -> Dict:
-    """Generate an adversarial math problem using Claude API"""
+    """Generate an adversarial math problem using API"""
     
     prompt = f"""As a math teacher, analyze this math question and create a similar but logically equivalent version:
 
@@ -72,15 +78,16 @@ def generate_adversarial_problem(model, question: str, model_answer: str, gt: st
     Important: Focus on creating a logically sound problem with clear mathematical steps.
     """
 
-    response = model.generate(prompt)
+    response, reasoning = model.generate(prompt)
     
-    # Parse response to extract new question
-    new_question = response.content[0].text
+    # # Parse response to extract new question
+    # new_question = response.content[0].text
     
     return {
         "original_question": question,
         "original_answer": model_answer,
-        "adversarial_question": new_question
+        "adversarial_question": response,
+        "adversarial_reasoning": reasoning
     }
     
 def generate_new_solution(model, question: str, model_answer: str, gt: str) -> Dict:
@@ -102,12 +109,13 @@ def generate_new_solution(model, question: str, model_answer: str, gt: str) -> D
     [Your step-by-step solution here] | $\\boxed{Final_numerical_answer}$
     """
 
-    response = model.generate(prompt)
+    response, reasoning = model.generate(prompt)
     
     return {
         "question": question,
         "model_answer": model_answer,
-        "solution": response.content[0].text
+        "solution": response,
+        "reasoning": reasoning
     }
 
 def extract_final_answer(text: str) -> str:
@@ -165,7 +173,7 @@ def save_adversarial_dataset(problems: List[Dict], output_file: str):
 
 
 def load_data(data_name, split, data_dir="./data"):
-    data_dir = "/share5/ru.wang/code/Qwen2.5-Math/evaluation/outputs_previous/Qwen"
+    data_dir = "../ru.wang/code/Qwen2.5-Math/evaluation/outputs_previous/Qwen"
     data_file = f"{data_dir}/Qwen2.5-Math-7B-Instruct/math_eval/{data_name}/test_qwen25-math-cot_-1_seed0_t0.0_s0_e-1.jsonl"
     print(data_file)
     if os.path.exists(data_file):
@@ -252,6 +260,7 @@ def parse_args():
     parser.add_argument("--data_names", default="gsm8k,math", type=str)
     parser.add_argument("--data_dir", default="./data", type=str)
     parser.add_argument("--model_name_or_path", default="gpt-4", type=str)
+    parser.add_argument("--endpoint_id", default='ep-20250216235228-69vhs', type=str)
     parser.add_argument("--output_dir", default="./output_adversarial", type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
     parser.add_argument("--split", default="test", type=str)
@@ -269,6 +278,7 @@ def parse_args():
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--use_safetensors", action="store_true")
     parser.add_argument("--num_shots", type=int, default=0)
+    parser.add_argument("--max_func_call", type=int, default=3)
     parser.add_argument(
         "--apply_chat_template",
         action="store_true",
@@ -291,9 +301,9 @@ def prepare_data(data_name, args):
     examples = load_data(data_name, args.split, args.data_dir)
 
     # Filter examples based on correct indices
-    if data_name == "gsm8k":
+    if data_name == "gsm8k" and len(gsm8k_correct) > 0:
         examples = [ex for ex in examples if ex["idx"] in gsm8k_correct]
-    elif data_name == "math":
+    elif data_name == "math" and len(math_correct) > 0:
         examples = [ex for ex in examples if ex["idx"] in math_correct]
 
     # sample `num_test_sample` from dataset
@@ -341,34 +351,35 @@ def prepare_data(data_name, args):
 
 
 def setup(args):
-    # load model
-    available_gpus = os.environ["CUDA_VISIBLE_DEVICES"].split(",")
-    if args.use_vllm:
-        llm = LLM(
-            model=args.model_name_or_path,
-            tensor_parallel_size=len(available_gpus) // args.pipeline_parallel_size,
-            pipeline_parallel_size=args.pipeline_parallel_size,
-            trust_remote_code=True,
-        )
-        tokenizer = None
-        if args.apply_chat_template:
-            tokenizer = AutoTokenizer.from_pretrained(
-                args.model_name_or_path, trust_remote_code=True
-            )
-    else:
-        llm, tokenizer = load_hf_lm_and_tokenizer(
-            model_name_or_path=args.model_name_or_path,
-            load_in_half=True,
-            use_fast_tokenizer=True,
-            use_safetensors=args.use_safetensors,
-        )
+    # # load model
+    # available_gpus = os.environ["CUDA_VISIBLE_DEVICES"].split(",")
+    # if args.use_vllm:
+    #     llm = LLM(
+    #         model=args.model_name_or_path,
+    #         tensor_parallel_size=len(available_gpus) // args.pipeline_parallel_size,
+    #         pipeline_parallel_size=args.pipeline_parallel_size,
+    #         trust_remote_code=True,
+    #     )
+    #     tokenizer = None
+    #     if args.apply_chat_template:
+    #         tokenizer = AutoTokenizer.from_pretrained(
+    #             args.model_name_or_path, trust_remote_code=True
+    #         )
+    # else:
+    #     llm, tokenizer = load_hf_lm_and_tokenizer(
+    #         model_name_or_path=args.model_name_or_path,
+    #         load_in_half=True,
+    #         use_fast_tokenizer=True,
+    #         use_safetensors=args.use_safetensors,
+    #     )
 
     # infer & eval
     data_list = args.data_names.split(",")
     for data_name in data_list:
         #new_problems = generate_adversarial_dataset(examples, num_examples=100)
         #main(anthropic, data_name, args)
-        main(llm, tokenizer, data_name, args)
+        # main(llm, tokenizer, data_name, args)
+        main(args.model_name_or_path, None, data_name, args)
 
 def is_multi_choice(answer):
     for c in answer:
@@ -411,49 +422,60 @@ def main(model_name, tokenizer, data_name, args):
     if len(examples) > 0:
         print(examples[0])
     # init python executor
-    max_func_call = 10
+    max_func_call = args.max_func_call
     start_time = time.time()
-    result_json = []
-    model = supported_VLM[model_name]
-    for sample in examples:
-        for ind_try in range(max_func_call):
-            try:
-                response_llm = generate_adversarial_problem(model, tokenizer, sample['question'], sample['answer'], sample['gt'])
-                new_problem = extract_new_problem(response_llm['adversarial_question'])
-                response_llm_solution = generate_new_solution(model, tokenizer, new_problem, sample['answer'], sample['gt'])
-                new_problem_solution = response_llm_solution['solution']
-                #new_problem_solution = extract_new_problem_solution(response_llm['adversarial_question'])
-                pred = get_pred(new_problem_solution) #extract_final_answer(new_problem_solution)
-                print(f"Try {ind_try}: \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
-                if (math_equal_process((sample['idx'], pred, sample['gt']))):
-                    print("Success")
-                    result_json.append(
-                        {
+    # result_json = []
+    result_dict = {}
+    # Initialize DeepSeek model
+    if model_name.startswith("VolcEngine"):
+        assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
+        model = supported_VLM[model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
+    # Prepare output
+    # output_file = args.output_dir + f"/math/adversarial_{data_name}_{args.model_name_or_path.split('/')[-1]}_{args.split}.jsonl"
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir, exist_ok=True)
+    # Iterate through examples
+    with open(out_file, "w" if args.overwrite else "a") as f:
+        for sample in examples:
+            sample_succeeded = False
+            for ind_try in range(max_func_call):
+                try:
+                    # response_llm = generate_adversarial_problem(model, tokenizer, sample['question'], sample['answer'], sample['gt'])
+                    response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], sample['gt'])
+                    new_problem = extract_new_problem(response_llm['adversarial_question'])
+                    adversarial_reasoning = response_llm['adversarial_reasoning']
+                    # response_llm_solution = generate_new_solution(model, tokenizer, new_problem, sample['answer'], sample['gt'])
+                    response_llm_solution = generate_new_solution(model, new_problem, sample['answer'], sample['gt'])
+                    new_problem_solution = response_llm_solution['solution']
+                    new_problem_reasoning = response_llm_solution['reasoning']
+                    #new_problem_solution = extract_new_problem_solution(response_llm['adversarial_question'])
+                    pred = get_pred(new_problem_solution) #extract_final_answer(new_problem_solution)
+                    print(f"Try {ind_try}: \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
+                    if (math_equal_process((sample['idx'], pred, sample['gt']))):
+                        sample_succeeded = True
+                        print("Success")
+                        success_result = {
                             "idx": sample["idx"],
                             "response_llm": response_llm,
                             "problem": sample['question'],
+                            "adversarial_reasoning": adversarial_reasoning,
                             "new_problem": new_problem,
                             "new_problem_solution": new_problem_solution,
+                            "new_problem_reasoning": new_problem_reasoning,
                             "gt": sample["gt"],
                         }
-                    )
-                    break
-                else:
-                    print("Fail")
-            except Exception as e:
-                print(e)
-    
-    
-    output_file = args.output_dir + f"/adversarial_{data_name}_{args.model_name_or_path.split('/')[-1]}.jsonl"
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir, exist_ok=True)
-    print(f"Total examples of adversarial {data_name}: {len(result_json)}")
-    print(f"Save to {output_file}")
-    with open(output_file, "w") as f:
-        for sample in result_json:
-            f.write(json.dumps(sample) + "\n")
+                        result_dict[sample["idx"]] = success_result
+                        break
+                    else:
+                        print("Fail")
+                except Exception as e:
+                    print(e)
+            if sample_succeeded:
+                f.write(json.dumps(success_result) + "\n")
+    print(f"Total examples of adversarial {data_name}: {len(result_dict)}")
+    print(f"Save to {out_file}")
       
-    return result_json
+    return list(result_dict.values())
 
 
 if __name__ == "__main__":

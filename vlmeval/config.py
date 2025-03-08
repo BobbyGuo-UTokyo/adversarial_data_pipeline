@@ -25,7 +25,7 @@ api_models = {
     'Claude3-5V_Sonnet': partial(Claude3V, model='claude-3-5-sonnet-20240620', temperature=0, retry=10, verbose=False),
     'Claude3-5V_Sonnet_20241022': partial(Claude3V, model='claude-3-5-sonnet-20241022', temperature=0, retry=10, verbose=False),
     # VolcEngine
-    'VolcEngine_DeepSeekR1': partial(VolcDeepSeekR1, model='ep-20250216235228-69vhs', has_reasoning=True, temperature=0, retry=10, verbose=False),
+    'VolcEngine_DeepSeekR1': partial(VolcDeepSeekR1, model='endpoint_id', has_reasoning=True, temperature=0, retry=3, verbose=False),
 }
 
 supported_VLM = {}
