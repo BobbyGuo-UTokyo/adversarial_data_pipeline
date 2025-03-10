@@ -16,12 +16,14 @@ from trajectory import *
 from data_loader import load_data
 from python_executor import PythonExecutor
 from model_utils import load_hf_lm_and_tokenizer, generate_completions
+from math_verify import parse, verify
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_names", default="gsm8k,math", type=str)
     parser.add_argument("--data_dir", default="./data", type=str)
+    parser.add_argument("--adversarial_generation_file_name", default="", type=str)
     parser.add_argument("--model_name_or_path", default="gpt-4", type=str)
     parser.add_argument("--output_dir", default="./output", type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
@@ -35,7 +37,9 @@ def parse_args():
     parser.add_argument("--top_p", default=1, type=float)
     parser.add_argument("--max_tokens_per_call", default=2048, type=int)
     parser.add_argument("--shuffle", action="store_true")
+    parser.add_argument("--use_math_verify", action="store_true")
     parser.add_argument("--use_vllm", action="store_true")
+    parser.add_argument("--test_adversarial_generation", action="store_true")
     parser.add_argument("--save_outputs", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--use_safetensors", action="store_true")
@@ -59,20 +63,25 @@ def parse_args():
 
 
 def prepare_data(data_name, args):
-    examples = load_data(data_name, args.split, args.data_dir)
+    if args.test_adversarial_generation:
+        adversarial_generation_file_path = os.path.join(args.data_dir, data_name, args.adversarial_generation_file_name)
+        assert os.path.isfile(adversarial_generation_file_path), f"Adversarial generation file {adversarial_generation_file_path} not found"
+        examples = list(load_jsonl(adversarial_generation_file_path))
+    else:
+        examples = load_data(data_name, args.split, args.data_dir)
 
-    # sample `num_test_sample` from dataset
-    if args.num_test_sample > 0:
-        # examples = random.sample(examples, min(args.num_test_sample, len(examples)))
-        examples = examples[: args.num_test_sample]
+        # sample `num_test_sample` from dataset
+        if args.num_test_sample > 0:
+            # examples = random.sample(examples, min(args.num_test_sample, len(examples)))
+            examples = examples[: args.num_test_sample]
 
-    # shuffle
-    if args.shuffle:
-        random.seed(datetime.now().timestamp())
-        random.shuffle(examples)
+        # shuffle
+        if args.shuffle:
+            random.seed(datetime.now().timestamp())
+            random.shuffle(examples)
 
-    # select start and end
-    examples = examples[args.start : len(examples) if args.end == -1 else args.end]
+        # select start and end
+        examples = examples[args.start : len(examples) if args.end == -1 else args.end]
 
     # get out_file name
     dt_string = datetime.now().strftime("%m-%d_%H-%M")
@@ -86,16 +95,17 @@ def prepare_data(data_name, args):
 
     # load all processed samples
     processed_samples = []
-    if not args.overwrite:
-        processed_files = [
-            f
-            for f in os.listdir(f"{output_dir}/{data_name}/")
-            if f.endswith(".jsonl") and f.startswith(out_file_prefix)
-        ]
-        for f in processed_files:
-            processed_samples.extend(
-                list(load_jsonl(f"{output_dir}/{data_name}/{f}"))
-            )
+    if not args.overwrite and os.path.isfile(out_file):
+        # processed_files = [
+        #     f
+        #     for f in os.listdir(f"{output_dir}/{data_name}/")
+        #     if f.endswith(".jsonl") and f.startswith(out_file_prefix)
+        # ]
+        # for f in processed_files:
+        #     processed_samples.extend(
+        #         list(load_jsonl(f"{output_dir}/{data_name}/{f}"))
+        #     )
+        processed_samples = list(load_jsonl(out_file))
 
     # dedepulicate
     processed_samples = {sample["idx"]: sample for sample in processed_samples}
@@ -107,8 +117,8 @@ def prepare_data(data_name, args):
 
 def setup(args):
     # load model
-    available_gpus = os.environ["CUDA_VISIBLE_DEVICES"].split(",")
     if args.use_vllm:
+        available_gpus = os.environ["CUDA_VISIBLE_DEVICES"].split(",")
         print("Using VLLM")
         print(args.model_name_or_path)
         llm = LLM(
@@ -177,10 +187,17 @@ def main(llm, tokenizer, data_name, args):
         idx = example["idx"]
 
         # parse question and answer
-        example["question"] = parse_question(example, data_name)
+        if args.test_adversarial_generation:
+            example["question"] = example["new_problem"]
+        else:
+            example["question"] = parse_question(example, data_name)
         if example["question"] == "":
             continue
-        gt_cot, gt_ans = parse_ground_truth(example, data_name)
+        if args.test_adversarial_generation:
+            gt_cot = example["new_problem_solution"]
+            gt_ans = example["gt"]
+        else:
+            gt_cot, gt_ans = parse_ground_truth(example, data_name)
         example["gt_ans"] = gt_ans
         full_prompt = construct_prompt(example, data_name, args)
 
@@ -193,6 +210,7 @@ def main(llm, tokenizer, data_name, args):
             "gt_cot": gt_cot,
             "gt": gt_ans,
             "prompt": full_prompt,
+            "is_adversarial_generation": args.test_adversarial_generation
         }
 
         # add remain fields
@@ -360,23 +378,31 @@ def main(llm, tokenizer, data_name, args):
         result = results[i * args.n_sampling : (i + 1) * args.n_sampling]
         preds = [item[0] for item in result]
         reports = [item[1] for item in result]
-        for j in range(len(preds)):
-            if sample["gt"] in ["A", "B", "C", "D", "E"] and preds[j] not in [
-                "A",
-                "B",
-                "C",
-                "D",
-                "E",
-            ]:
-                preds[j] = choice_answer_clean(code[j])
-            elif is_multi_choice(sample["gt"]) and not is_multi_choice(preds[j]):
-                # remove any non-choice char
-                preds[j] = "".join(
-                    [c for c in preds[j] if c in ["A", "B", "C", "D", "E"]]
-                )
-
+        if args.use_math_verify:
+            parsed_pred =[]
+            for pred in preds:
+                parsed_pred.extend(parse(pred))
+            parsed_gt = parse(sample["gt"])
+        else:
+            for j in range(len(preds)):
+                if sample["gt"] in ["A", "B", "C", "D", "E"] and preds[j] not in [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                ]:
+                    preds[j] = choice_answer_clean(code[j])
+                elif is_multi_choice(sample["gt"]) and not is_multi_choice(preds[j]):
+                    # remove any non-choice char
+                    preds[j] = "".join(
+                        [c for c in preds[j] if c in ["A", "B", "C", "D", "E"]]
+                    )
         sample.pop("prompt")
-        sample.update({"code": code, "pred": preds, "report": reports})
+        if args.use_math_verify:
+            sample.update({"code": code, "pred": preds, "report": reports, "parsed_pred": parsed_pred, "parsed_gt": parsed_gt})
+        else:
+            sample.update({"code": code, "pred": preds, "report": reports})
         all_samples.append(sample)
 
     # add processed samples
@@ -386,6 +412,7 @@ def main(llm, tokenizer, data_name, args):
         data_name=data_name,
         prompt_type=args.prompt_type,
         execute=True,
+        use_math_verify=args.use_math_verify
     )
 
     # save outputs

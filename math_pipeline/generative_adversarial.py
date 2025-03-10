@@ -21,11 +21,12 @@ import sys
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(root_dir)
 from vlmeval.config import supported_VLM
+from math_verify import parse, verify
 
-# gsm8k_correct =[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 160, 161, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208]
-# math_correct = [0, 1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 99, 100, 101, 104, 105, 106, 107, 108, 109, 111, 112, 113, 115, 116, 117, 120, 121, 122, 123, 125, 126, 127, 128, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 188, 189, 190, 191, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 210, 211, 212, 213, 214, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225]
-gsm8k_correct = []
-math_correct = []
+gsm8k_correct =[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 160, 161, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208]
+math_correct = [0, 1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 99, 100, 101, 104, 105, 106, 107, 108, 109, 111, 112, 113, 115, 116, 117, 120, 121, 122, 123, 125, 126, 127, 128, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 188, 189, 190, 191, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 210, 211, 212, 213, 214, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225]
+# gsm8k_correct = []
+# math_correct = []
 
 import os
 import json
@@ -50,7 +51,7 @@ anthropic = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
 
-def generate_adversarial_problem(model, question: str, model_answer: str, gt: str) -> Dict:
+def generate_adversarial_problem(model, question: str, model_answer: str, granularity_prompt: str, gt: str) -> Dict:
     """Generate an adversarial math problem using API"""
     
     prompt = f"""As a math teacher, analyze this math question and create a similar but logically equivalent version:
@@ -59,20 +60,21 @@ def generate_adversarial_problem(model, question: str, model_answer: str, gt: st
     Student's Solution: {model_answer}
 
     Please generate a new question and its solution that:
-    1. Tests similar mathematical concepts but uses a different scenario
-    2. Maintains mathematical rigor and logical consistency
-    3. Involves natural calculations that flow logically 
-    4. Uses realistic numbers and scenarios
-    5. Shows clear step-by-step reasoning
-    6. Arrives at an answer through valid mathematical operations
-    7. The final numerical answer should be {gt} through natural mathematical steps
-    8. Do not artificially manipulate numbers to force this result - the solution should flow logically
-    9. If you cannot create a naturally equivalent problem, notify me that it's not possible to maintain mathematical integrity
-    10. Answer should not be rounded or approximated
+    1. Tests similar mathematical concepts
+    2. {granularity_prompt}
+    3. Maintains mathematical rigor and logical consistency
+    4. Involves natural calculations that flow logically 
+    5. Uses realistic numbers and scenarios
+    6. Shows clear step-by-step reasoning
+    7. Arrives at an answer through valid mathematical operations
+    8. The final numerical answer should be {gt} through natural mathematical steps
+    9. Do not artificially manipulate numbers to force this result - the solution should flow logically
+    10. If you cannot create a naturally equivalent problem, notify me that it's not possible to maintain mathematical integrity
+    11. Answer should not be rounded or approximated
 
     Provide your response in this format:
     <new_problem>
-    [Your new question here]
+    [Your new question here. Question only. No solution.]
     </new_problem>
     explain your reasoning here
     Important: Focus on creating a logically sound problem with clear mathematical steps.
@@ -175,6 +177,7 @@ def save_adversarial_dataset(problems: List[Dict], output_file: str):
 def load_data(data_name, split, data_dir="./data"):
     data_dir = "../ru.wang/code/Qwen2.5-Math/evaluation/outputs_previous/Qwen"
     data_file = f"{data_dir}/Qwen2.5-Math-7B-Instruct/math_eval/{data_name}/test_qwen25-math-cot_-1_seed0_t0.0_s0_e-1.jsonl"
+    # data_file = f"{data_dir}/{data_name}/{split}.jsonl"
     print(data_file)
     if os.path.exists(data_file):
         print("load data from file")
@@ -248,11 +251,21 @@ def load_data(data_name, split, data_dir="./data"):
     # add 'idx' in the first column
     if "idx" not in examples[0]:
         examples = [{"idx": i, **example} for i, example in enumerate(examples)]
-
+    # add 'question'
+    if "question" not in examples[0]:
+        examples = [
+            {**example, "question": parse_question(example, data_name)}
+            for example in examples
+        ]
+    # add 'gt'
+    if "gt" not in examples[0]:
+        examples = [
+            {**example, "gt": parse_ground_truth(example, data_name)[1], "answer": parse_ground_truth(example, data_name)[0]}
+            for example in examples
+        ]
     # dedepulicate & sort
     examples = sorted(examples, key=lambda x: x["idx"])
     return examples
-
 
 
 def parse_args():
@@ -263,7 +276,9 @@ def parse_args():
     parser.add_argument("--endpoint_id", default='ep-20250216235228-69vhs', type=str)
     parser.add_argument("--output_dir", default="./output_adversarial", type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
+    parser.add_argument("--granularity_prompt", default="Mainly modify variable names like item names or person names and try to keep other things unchanged", type=str)
     parser.add_argument("--split", default="test", type=str)
+    parser.add_argument("--postfix", default="", type=str)
     parser.add_argument("--num_test_sample", default=-1, type=int)  # -1 for full data
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--start", default=0, type=int)
@@ -277,6 +292,7 @@ def parse_args():
     parser.add_argument("--save_outputs", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--use_safetensors", action="store_true")
+    parser.add_argument("--use_math_verify", action="store_true")
     parser.add_argument("--num_shots", type=int, default=0)
     parser.add_argument("--max_func_call", type=int, default=3)
     parser.add_argument(
@@ -313,7 +329,8 @@ def prepare_data(data_name, args):
 
     # shuffle
     if args.shuffle:
-        random.seed(datetime.now().timestamp())
+        # random.seed(datetime.now().timestamp())
+        random.seed(args.seed)
         random.shuffle(examples)
 
     # select start and end
@@ -326,21 +343,26 @@ def prepare_data(data_name, args):
     output_dir = args.output_dir
     if not os.path.exists(output_dir):
         output_dir = f"outputs/{output_dir}"
-    out_file = f"{output_dir}/{data_name}/{out_file_prefix}_s{args.start}_e{args.end}.jsonl"
+    if len(args.postfix):
+        post_fix = f"_{args.postfix}"
+    else:
+        post_fix = ""
+    out_file = f"{output_dir}/{data_name}/{out_file_prefix}_s{args.start}_e{args.end}{post_fix}.jsonl"
     os.makedirs(f"{output_dir}/{data_name}", exist_ok=True)
 
     # load all processed samples
     processed_samples = []
-    if not args.overwrite:
-        processed_files = [
-            f
-            for f in os.listdir(f"{output_dir}/{data_name}/")
-            if f.endswith(".jsonl") and f.startswith(out_file_prefix)
-        ]
-        for f in processed_files:
-            processed_samples.extend(
-                list(load_jsonl(f"{output_dir}/{data_name}/{f}"))
-            )
+    if not args.overwrite and os.path.isfile(out_file):
+        # processed_files = [
+        #     f
+        #     for f in os.listdir(f"{output_dir}/{data_name}/")
+        #     if f.endswith(".jsonl") and f.startswith(out_file_prefix)
+        # ]
+        # for f in processed_files:
+        #     processed_samples.extend(
+        #         list(load_jsonl(f"{output_dir}/{data_name}/{f}"))
+        #     )
+        processed_samples = list(load_jsonl(out_file))
 
     # dedepulicate
     processed_samples = {sample["idx"]: sample for sample in processed_samples}
@@ -441,7 +463,7 @@ def main(model_name, tokenizer, data_name, args):
             for ind_try in range(max_func_call):
                 try:
                     # response_llm = generate_adversarial_problem(model, tokenizer, sample['question'], sample['answer'], sample['gt'])
-                    response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], sample['gt'])
+                    response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], args.granularity_prompt, sample['gt'])
                     new_problem = extract_new_problem(response_llm['adversarial_question'])
                     adversarial_reasoning = response_llm['adversarial_reasoning']
                     # response_llm_solution = generate_new_solution(model, tokenizer, new_problem, sample['answer'], sample['gt'])
@@ -449,9 +471,15 @@ def main(model_name, tokenizer, data_name, args):
                     new_problem_solution = response_llm_solution['solution']
                     new_problem_reasoning = response_llm_solution['reasoning']
                     #new_problem_solution = extract_new_problem_solution(response_llm['adversarial_question'])
-                    pred = get_pred(new_problem_solution) #extract_final_answer(new_problem_solution)
-                    print(f"Try {ind_try}: \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
-                    if (math_equal_process((sample['idx'], pred, sample['gt']))):
+                    if args.use_math_verify:
+                        pred = parse(new_problem_solution)
+                        verified_correct = verify(parse(sample["gt"]), pred)
+                        print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
+                    else:
+                        pred = get_pred(new_problem_solution) #extract_final_answer(new_problem_solution)
+                        print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
+                        verified_correct = math_equal_process((sample['idx'], pred, sample['gt']))
+                    if verified_correct:
                         sample_succeeded = True
                         print("Success")
                         success_result = {

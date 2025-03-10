@@ -2,7 +2,8 @@ vllm
 tqdm
 transformers
 datasets
-latex2sympy2
+# latex2sympy2
+latex2sympy2_extended
 pebble
 word2number
 timeout_decorator
@@ -14,3 +15,5 @@ validators
 matplotlib
 tabulate
 sty
+math-verify
+accelerate

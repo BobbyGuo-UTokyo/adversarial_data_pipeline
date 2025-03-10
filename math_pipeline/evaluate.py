@@ -9,6 +9,7 @@ from grader import *
 from parser import *
 from utils import load_jsonl
 from python_executor import PythonExecutor
+from math_verify import parse, verify
 
 
 def evaluate_one_file(sample: dict, data_name: str, prompt_type: str, execute: bool = False) -> bool:
@@ -52,7 +53,10 @@ def evaluate_without_gtcot(data_name, prompt_type, samples: list=None, file_path
     timeout_cnt = 0 
 
     with ProcessPool(max_workers=1) as pool:
-        future = pool.map(math_equal_process, params, timeout=3)
+        if use_math_verify:
+            future = pool.map(math_equal_process, params, timeout=3)
+        else:
+            future = pool.map(math_equal_process, params, timeout=3)
         iterator = future.result()
         with tqdm(total=len(samples), desc="Evaluate") as progress_bar:
             while True:
@@ -110,7 +114,7 @@ def evaluate_without_gtcot(data_name, prompt_type, samples: list=None, file_path
     print(result_json)
     return samples, result_json
 
-def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, max_num_samples=None, execute=False):
+def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, max_num_samples=None, execute=False, use_math_verify=False):
     assert samples or file_path, "samples or file_path must be provided"
     if not samples:
         samples = list(load_jsonl(file_path))
@@ -125,15 +129,18 @@ def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, ma
         samples = samples[:max_num_samples]
     
     # parse gt
-    for sample in samples:
-        sample['gt_cot'], sample['gt'] = parse_ground_truth(sample, data_name)
-    params = [(idx, pred, sample['gt']) for idx, sample in enumerate(samples) for pred in sample['pred']]
+    if use_math_verify:
+        params = [(pred, sample['parsed_gt']) for idx, sample in enumerate(samples) for pred in sample['parsed_pred']]
+    else:
+        for sample in samples:
+            sample['gt_cot'], sample['gt'] = parse_ground_truth(sample, data_name)
+        params = [(idx, pred, sample['gt']) for idx, sample in enumerate(samples) for pred in sample['pred']]
 
     scores = []
     timeout_cnt = 0 
 
     with ProcessPool(max_workers=1) as pool:
-        future = pool.map(math_equal_process, params, timeout=3)
+        future = pool.map(verify, params, timeout=3)
         iterator = future.result()
         with tqdm(total=len(samples), desc="Evaluate") as progress_bar:
             while True:

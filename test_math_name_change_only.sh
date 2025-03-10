@@ -1,0 +1,2 @@
+python3 math_pipeline/math_eval.py --data_names gsm8k --data_dir output_adversarial --adversarial_generation_file_name train_qwen25-math-cot_20_seed42_t0.0_s0_e-1_name_change_only.json
+l --model_name_or_path "Qwen/Qwen2.5-Math-7B-Instruct" --output_dir test_adversarial_results --prompt_type qwen25-math-cot --split train --num_test_sample 20 --seed 42 --start 0 --end -1 --temperature 0 --shuffle --use_math_verify --test_adversarial_generation --save_outputs --use_safetensors
