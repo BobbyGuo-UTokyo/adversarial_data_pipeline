@@ -114,6 +114,11 @@ def evaluate_without_gtcot(data_name, prompt_type, samples: list=None, file_path
     print(result_json)
     return samples, result_json
 
+
+def math_verify_param(param):
+    return verify(param[0], param[1])
+
+
 def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, max_num_samples=None, execute=False, use_math_verify=False):
     assert samples or file_path, "samples or file_path must be provided"
     if not samples:
@@ -130,7 +135,7 @@ def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, ma
     
     # parse gt
     if use_math_verify:
-        params = [(pred, sample['parsed_gt']) for idx, sample in enumerate(samples) for pred in sample['parsed_pred']]
+        params = [(sample['parsed_pred'], sample['parsed_gt']) for sample in samples]
     else:
         for sample in samples:
             sample['gt_cot'], sample['gt'] = parse_ground_truth(sample, data_name)
@@ -140,7 +145,7 @@ def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, ma
     timeout_cnt = 0 
 
     with ProcessPool(max_workers=1) as pool:
-        future = pool.map(verify, params, timeout=3)
+        future = pool.map(math_verify_param if use_math_verify else math_equal_process, params, timeout=3)
         iterator = future.result()
         with tqdm(total=len(samples), desc="Evaluate") as progress_bar:
             while True:

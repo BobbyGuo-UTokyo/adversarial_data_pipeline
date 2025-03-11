@@ -173,6 +173,7 @@ cython_debug/
 # data
 data/
 output_adversarial/
+outputs/
 
 # env
 .env

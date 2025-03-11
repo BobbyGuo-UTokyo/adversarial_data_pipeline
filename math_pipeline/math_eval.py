@@ -5,6 +5,8 @@ import time
 from vllm import LLM, SamplingParams
 from datetime import datetime
 from tqdm import tqdm
+import json
+from sympy.core.numbers import Integer as SympyInteger
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -26,6 +28,7 @@ def parse_args():
     parser.add_argument("--adversarial_generation_file_name", default="", type=str)
     parser.add_argument("--model_name_or_path", default="gpt-4", type=str)
     parser.add_argument("--output_dir", default="./output", type=str)
+    parser.add_argument("--output_name", default=None, type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
     parser.add_argument("--split", default="test", type=str)
     parser.add_argument("--num_test_sample", default=-1, type=int)  # -1 for full data
@@ -84,14 +87,18 @@ def prepare_data(data_name, args):
         examples = examples[args.start : len(examples) if args.end == -1 else args.end]
 
     # get out_file name
-    dt_string = datetime.now().strftime("%m-%d_%H-%M")
-    model_name = "/".join(args.model_name_or_path.split("/")[-2:])
-    out_file_prefix = f"{args.split}_{args.prompt_type}_{args.num_test_sample}_seed{args.seed}_t{args.temperature}"
     output_dir = args.output_dir
     if not os.path.exists(output_dir):
         output_dir = f"outputs/{output_dir}"
-    out_file = f"{output_dir}/{data_name}/{out_file_prefix}_s{args.start}_e{args.end}.jsonl"
+    if args.output_name is None:
+        dt_string = datetime.now().strftime("%m-%d_%H-%M")
+        model_name = "/".join(args.model_name_or_path.split("/")[-2:])
+        out_file_prefix = f"{args.split}_{args.prompt_type}_{args.num_test_sample}_seed{args.seed}_t{args.temperature}"
+        out_file = f"{output_dir}/{data_name}/{out_file_prefix}_s{args.start}_e{args.end}.jsonl"
+    else:
+        out_file = f"{output_dir}/{data_name}/{args.output_name.replace('.jsonl', '')}.jsonl"
     os.makedirs(f"{output_dir}/{data_name}", exist_ok=True)
+
 
     # load all processed samples
     processed_samples = []
@@ -417,6 +424,9 @@ def main(llm, tokenizer, data_name, args):
 
     # save outputs
     if len(processed_samples) < len(all_samples) and args.save_outputs:
+        for i, sample in enumerate(all_samples):
+            all_samples[i]["parsed_pred"] = [int(pred) for pred in sample["parsed_pred"] if isinstance(pred, SympyInteger)]
+            all_samples[i]["parsed_gt"] = [int(gt) for gt in sample["parsed_gt"] if isinstance(gt, SympyInteger)]
         save_jsonl(all_samples, out_file)
 
     result_json["time_use_in_second"] = time_use
