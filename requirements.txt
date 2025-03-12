@@ -17,3 +17,4 @@ tabulate
 sty
 math-verify
 accelerate
+openpyxl
