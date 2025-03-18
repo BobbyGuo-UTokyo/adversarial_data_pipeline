@@ -49,8 +49,6 @@ assert "ANTHROPIC_API_KEY" in os.environ, "Please set ANTHROPIC_API_KEY environm
 anthropic = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
-
-
 def generate_adversarial_problem(model, question: str, model_answer: str, granularity_prompt: str, gt: str) -> Dict:
     """Generate an adversarial math problem using API"""
     
@@ -91,8 +89,92 @@ def generate_adversarial_problem(model, question: str, model_answer: str, granul
         "adversarial_question": response,
         "adversarial_reasoning": reasoning
     }
+
+def generate_adversarial_problem_given_prompt_file(model, question: str, model_answer: str, gt: str, prompt_file: str) -> Dict:
+    """Generate an adversarial math problem using API"""
     
-def generate_new_solution(model, question: str, model_answer: str, gt: str) -> Dict:
+    lines = open(prompt_file).readlines()
+    prompt = "\n".join(open(prompt_file).readlines()).format(question, gt, model_answer, gt)
+    response, reasoning = model.generate(prompt)
+
+    return {
+        "original_question": question,
+        "original_answer": model_answer,
+        "adversarial_question": response,
+        "adversarial_reasoning": reasoning
+    }
+
+def generate_adversarial_problem_word_level(model, question: str, model_answer: str, gt: str) -> Dict:
+    prompt = f"""
+    Adversarial Math Problem Generator
+    Objective: Modify the original problem at the word level to create a semantically equivalent but linguistically distinct version that exposes memorization-based problem-solving and tests deep conceptual understanding.
+
+    Original Question: {question}
+    Original ground truth: {gt}
+    Student's Solution: {model_answer}
+
+    Steps to Generate Adversarial Problem:
+
+    1. Deconstruct the Original Problem:
+    - Identify the core mathematical concept (e.g., linear equations, geometry).
+    - Map the problem's logical structure (e.g., sequential steps, dependencies).
+    - Identify potential pitfalls or shortcuts that a solver might exploit if they focus only on surface-level cues.
+
+    2. Analyze the student's solution:
+    - Check the validity of the solution and verify that the reasoning truly understands the core mathematical concepts and steps are naturally leading to the final answer.
+    - If the answer is correct, find potential shortcuts or assumptions the student used (e.g., memorized formulas without contextual analysis).
+    - If the answer is incorrect, diagnose the root misunderstanding (e.g., misapplying order of operations, misinterpreting units).
+
+    3. Word-Level Adversarial Modifications:
+    - Disassemble the original problem word by word.
+    - Replace or tweak each word to integrate adversarial elements that can create fine-grained confusion or introduce subtle traps.
+    - Ensure that while the individual words change, the underlying computational logic remains unchanged.
+
+    4. Rebuild Context & Structure:
+    - Transplant the problem into a new real-world scenario (e.g., replace "bakery sales" with "bookstore inventory").
+    - Retain the original problem format (e.g., if the original uses a two-part question, mirror it exactly).
+    - Ensure that the new context still embeds the identified pitfalls in specific words.
+
+    5. Embed Pitfalls Strategically:
+    - Choose words that may have multiple interpretations or ambiguous meanings to prompt common mistakes or encourage reliance on shortcuts.
+    - Consider embedding potential edge cases or misleading hints by carefully selecting synonyms that challenge solvers.
+
+    6. Validation Check:
+    - Confirm the adversarial problem:
+        -- Requires the same mathematical logic as the original.
+        -- Contains no contradictions or mismatched values.
+        -- Would trick memorization-based solvers but reward conceptual understanding.
+        -- The final answer remains {gt} through valid steps, even with modified wording.
+    - If validation fails, return: Error: Adversarial problem cannot satisfy constraints.
+
+    Output Format:
+
+    Your final output should be wrapped in the following tags:
+
+    <new_problem>
+    Insert your generated problem description here.
+    [Insert adversarially modified problem here. Maintain the original’s structure, including line breaks, punctuation, and numbering.]
+    </new_problem>
+
+    Example:
+    Original Problem:
+    Carla is downloading a 200 GB file. Normally she can download 2 GB/minute, but 40% of the way through the download, Windows forces a restart to install updates, which takes 20 minutes. Then Carla has to restart the download from the beginning. How load does it take to download the file?
+
+    Adversarial Problem:
+    <new_problem>
+    David is rendering a 200 GB video project. Normally his software can render 2 GB/minute, but 40% of the way through the process, the software crashes, requiring a system reboot that takes 20 minutes. After rebooting, David has to restart the rendering from the beginning. How long does it take to complete the rendering?
+    </new_problem>
+    """
+    response, reasoning = model.generate(prompt)
+    
+    return {
+        "original_question": question,
+        "original_answer": model_answer,
+        "adversarial_question": response,
+        "adversarial_reasoning": reasoning
+    }
+
+def generate_new_solution(model, question: str, has_reasoning: bool=True) -> Dict:
     """Generate solution for the adversarial math problem using Claude API"""
     Final_numerical_answer = "Final numerical answer"
     prompt = f"""As a math teacher, solve this math problem with clear step-by-step reasoning:
@@ -103,19 +185,53 @@ def generate_new_solution(model, question: str, model_answer: str, gt: str) -> D
     1. Shows each step clearly
     2. Explains the mathematical reasoning
     3. Uses valid mathematical operations
-    4. Arrives at the final answer of {gt}
-    5. Uses natural calculations that flow logically
-    6. Does not round or approximate numbers
+    4. Uses natural calculations that flow logically
+    5. Does not round or approximate numbers
     
     Provide your solution in this format:
     [Your step-by-step solution here] | $\\boxed{Final_numerical_answer}$
     """
 
-    response, reasoning = model.generate(prompt)
+    if has_reasoning:
+        response, reasoning = model.generate(prompt)
+    else:
+        response = model.generate(prompt)
+        reasoning = ""
     
     return {
         "question": question,
-        "model_answer": model_answer,
+        "solution": response,
+        "reasoning": reasoning
+    }
+
+def generate_new_solution_given_gt(model, question: str, gt: str, has_reasoning: bool=True) -> Dict:
+    """Generate solution for the adversarial math problem using Claude API"""
+    Final_numerical_answer = "Final numerical answer"
+    prompt = f"""As a math teacher, solve this math problem with clear step-by-step reasoning:
+
+    Question: {question}
+
+    Please provide a detailed solution that:
+    1. Shows each step clearly
+    2. Explains the mathematical reasoning
+    3. Uses valid mathematical operations
+    4. Uses natural calculations that flow logically
+    5. Does not round or approximate numbers
+    6. Arrives at the final answer of {gt}
+    7. Do not artificially manipulate numbers or add conditions to force this result - the solution should flow logically
+    
+    Provide your solution in this format:
+    [Your step-by-step solution here] | $\\boxed{Final_numerical_answer}$
+    """
+
+    if has_reasoning:
+        response, reasoning = model.generate(prompt)
+    else:
+        response = model.generate(prompt)
+        reasoning = ""
+    
+    return {
+        "question": question,
         "solution": response,
         "reasoning": reasoning
     }
@@ -272,11 +388,13 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_names", default="gsm8k,math", type=str)
     parser.add_argument("--data_dir", default="./data", type=str)
-    parser.add_argument("--model_name_or_path", default="gpt-4", type=str)
+    parser.add_argument("--model_name_or_path", default="VolcEngine_DeepSeekR1", type=str)
+    parser.add_argument("--verifier_model_names", default=["VolcEngine_DeepSeekR1"], type=str, nargs="+")
     parser.add_argument("--endpoint_id", default='ep-20250216235228-69vhs', type=str)
     parser.add_argument("--output_dir", default="./output_adversarial", type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
     parser.add_argument("--granularity_prompt", default="Mainly modify variable names like item names or person names and try to keep other things unchanged", type=str)
+    parser.add_argument("--prompt_file", default=None, type=str)
     parser.add_argument("--split", default="test", type=str)
     parser.add_argument("--postfix", default="", type=str)
     parser.add_argument("--num_test_sample", default=-1, type=int)  # -1 for full data
@@ -448,12 +566,25 @@ def main(model_name, tokenizer, data_name, args):
     start_time = time.time()
     # result_json = []
     result_dict = {}
+
     # Initialize DeepSeek model
     if model_name.startswith("VolcEngine"):
         assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
         model = supported_VLM[model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
     # Prepare output
     # output_file = args.output_dir + f"/math/adversarial_{data_name}_{args.model_name_or_path.split('/')[-1]}_{args.split}.jsonl"
+
+    # Initialize verifier models
+    verifier_models = []
+    for verifier_model_name in args.verifier_model_names:
+        if verifier_model_name.startswith("VolcEngine"):
+            assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
+            verifier_model = supported_VLM[verifier_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
+            verifier_models.append(verifier_model)
+        else:
+            verifier_model = supported_VLM[verifier_model_name]()
+
+    # Create output directory if it doesn't exist
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir, exist_ok=True)
     # Iterate through examples
@@ -463,18 +594,33 @@ def main(model_name, tokenizer, data_name, args):
             for ind_try in range(max_func_call):
                 try:
                     # response_llm = generate_adversarial_problem(model, tokenizer, sample['question'], sample['answer'], sample['gt'])
-                    response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], args.granularity_prompt, sample['gt'])
+                    # response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], args.granularity_prompt, sample['gt'])
+                    # response_llm = generate_adversarial_problem_word_level(model, sample['question'], sample['answer'], sample['gt'])
+                    if args.prompt_file is not None:
+                        response_llm = generate_adversarial_problem_given_prompt_file(model, sample['question'], sample['answer'], sample['gt'], args.prompt_file)
+                    else:
+                        response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], args.granularity_prompt, sample['gt'])
                     new_problem = extract_new_problem(response_llm['adversarial_question'])
                     adversarial_reasoning = response_llm['adversarial_reasoning']
                     # response_llm_solution = generate_new_solution(model, tokenizer, new_problem, sample['answer'], sample['gt'])
-                    response_llm_solution = generate_new_solution(model, new_problem, sample['answer'], sample['gt'])
+                    # response_llm_solution = generate_new_solution(model, new_problem, sample['answer'], sample['gt'])
+                    response_llm_solution = generate_new_solution(model, new_problem, has_reasoning=True)
                     new_problem_solution = response_llm_solution['solution']
                     new_problem_reasoning = response_llm_solution['reasoning']
                     #new_problem_solution = extract_new_problem_solution(response_llm['adversarial_question'])
+                    # # Verify the new problem solution with verifier models
+                    # verifier_solutions = []
+                    # for verifier_model in verifier_models:
+                    #     verifier_response = generate_new_solution(verifier_model, new_problem)
+                    #     verifier_pred = get_pred(verifier_response['solution'])
+                    #     if not verify(parse(sample["gt"]), parse(verifier_pred)):
+                    #         print(f"Verifier {verifier_model.__class__.__name__} failed to verify the new problem solution.")
+                    #         break
+                    # verified_correct = True
                     if args.use_math_verify:
                         pred = parse(new_problem_solution)
                         verified_correct = verify(parse(sample["gt"]), pred)
-                        print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
+                        print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {parse(sample['gt'])}?")
                     else:
                         pred = get_pred(new_problem_solution) #extract_final_answer(new_problem_solution)
                         print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")

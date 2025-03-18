@@ -1,3 +1,0 @@
-sh run_math_name_change_only.sh
-sh run_math_paraphrase.sh
-sh run_math_full_change.sh

@@ -1,0 +1,58 @@
+Adversarial Math Problem Generator
+Objective: Modify the original problem at the word level to create a semantically equivalent but linguistically distinct version that exposes memorization-based problem-solving and tests deep conceptual understanding.
+
+Original Question: {}
+Original ground truth: {}
+Student's Solution: {}
+
+Steps to Generate Adversarial Problem:
+
+1. Deconstruct the Original Problem:
+   - Identify the core mathematical concept (e.g., linear equations, geometry).
+   - Map the problem’s logical structure (e.g., sequential steps, dependencies).
+   - Identify potential pitfalls or shortcuts that a solver might exploit if they focus only on surface-level cues.
+
+2. Analyze the student's solution:
+   - Check the validity of the solution and verify that the reasoning truly understands the core mathematical concepts and steps are naturally leading to the final answer.
+   - If the answer is correct, find potential shortcuts or assumptions the student used (e.g., memorized formulas without contextual analysis).
+   - If the answer is incorrect, diagnose the root misunderstanding (e.g., misapplying order of operations, misinterpreting units).
+
+3. Word-Level Adversarial Modifications:
+   - Disassemble the original problem word by word.
+   - Replace or tweak each word to integrate adversarial elements that can create fine-grained confusion or introduce subtle traps.
+   - Ensure that while the individual words change, the underlying computational logic remains unchanged.
+
+4. Rebuild Context & Structure:
+   - Transplant the problem into a new real-world scenario (e.g., replace "bakery sales" with "bookstore inventory").
+   - Retain the original problem format (e.g., if the original uses a two-part question, mirror it exactly).
+   - Ensure that the new context still embeds the identified pitfalls in specific words.
+
+5. Embed Pitfalls Strategically:
+   - Choose words that may have multiple interpretations or ambiguous meanings to prompt common mistakes or encourage reliance on shortcuts.
+   - Consider embedding potential edge cases or misleading hints by carefully selecting synonyms that challenge solvers.
+
+6. Validation Check:
+   - Confirm the adversarial problem:
+      -- Requires the same mathematical logic as the original.
+      -- Contains no contradictions or mismatched values.
+      -- Would trick memorization-based solvers but reward conceptual understanding.
+      -- The final answer remains {} through valid steps, even with modified wording.
+   - If validation fails, return: Error: Adversarial problem cannot satisfy constraints.
+
+Output Format:
+
+Your final output should be wrapped in the following tags:
+
+<new_problem>
+Insert your generated problem description here.
+[Insert adversarially modified problem here. Maintain the original’s structure, including line breaks, punctuation, and numbering.]
+</new_problem>
+
+Example:
+Original Problem:
+Carla is downloading a 200 GB file. Normally she can download 2 GB/minute, but 40% of the way through the download, Windows forces a restart to install updates, which takes 20 minutes. Then Carla has to restart the download from the beginning. How load does it take to download the file?
+
+Adversarial Problem:
+<new_problem>
+David is rendering a 200 GB video project. Normally his software can render 2 GB/minute, but 40% of the way through the process, the software crashes, requiring a system reboot that takes 20 minutes. After rebooting, David has to restart the rendering from the beginning. How long does it take to complete the rendering?
+</new_problem>

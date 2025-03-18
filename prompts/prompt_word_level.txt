@@ -1,0 +1,45 @@
+Develop an adversarial math problem from a provided original problem by focusing on modifying the original problem at the word level. This means that each word of the original description should be individually rephrased, substituted, or altered to maintain the same semantic structure and format while introducing subtle variations or traps that could mislead students who depend on memorization rather than a nuanced understanding.
+
+Original Question: {}
+Original ground truth: {}
+Student's Solution: {}
+
+Steps:
+
+1. Review the Original Problem:
+   - Scrutinize the problem setup and find the core mathematical concepts.
+   - Identify potential pitfalls or shortcuts that a solver might exploit if they focus only on surface-level cues.
+
+2. Analyze the student's solution:
+   - Check the validity of the solution and verify that the reasoning truly understands the core mathematical concepts and steps are naturally leading to the final answer.
+   - If the answer is correct, find potential pitfalls or shortcuts that may exist in the solution provided.
+   - If the answer is incorrect, pinpoint the mistake and use this for developing the new problem.
+
+3. Word-Level Modification:
+   - Disassemble the original problem word by word.
+   - Replace or tweak each word to integrate adversarial elements that can create fine-grained confusion or introduce subtle traps.
+   - Ensure that while the individual words change, the underlying computational logic remains unchanged.
+
+4. Develop New Context:
+   - Blend a different narrative or context into the problem by altering word-level details, transforming the setting (for instance, into a new real-world scenario).
+   - Ensure that the new context still embeds the identified pitfalls in specific words.
+
+5. Incorporate Pitfalls:
+   - Choose words that may have multiple interpretations or ambiguous meanings to prompt common mistakes or encourage reliance on shortcuts.
+   - Consider embedding potential edge cases or misleading hints by carefully selecting synonyms that challenge solvers.
+
+6. Maintain Consistency:
+   - Preserve all mathematical variable values exactly as specified in the original problem, so that the core logic remain consistent.
+   - The final answer to the new problem should still be {} without rounding or approximation, through natural mathematical steps.
+   - Keep mathematical rigor and logical consistency.
+   - Involve natural calculations that flow logically.
+   - If new problem satisfying above conditions cannot be created, give a notification.
+
+Output Format:
+
+Your final output should be wrapped in the following tags:
+
+<new_problem>
+Insert your generated problem description here.
+(New problem only. Keep the exact same format as the original problem, including each term of the problem.)
+</new_problem>
