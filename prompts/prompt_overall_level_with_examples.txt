@@ -1,0 +1,80 @@
+Adversarial Math Problem Generator
+Objective: Write a new problem that is linguistically different from the original problem, but tests the same core mathematical knowledge, to expose memorization-based problem-solving and tests deep conceptual understanding.
+
+Original Question: {}
+Original ground truth: {}
+Student's Solution: {}
+
+Steps to Generate Adversarial Problem:
+
+1. Deconstruct the Original Problem:
+   - Identify the core mathematical concept (e.g., linear equations, geometry).
+   - Map the problem’s logical structure (e.g., sequential steps, dependencies).
+   - Identify potential pitfalls or shortcuts that a solver might exploit if they focus only on surface-level cues.
+
+2. Analyze the student's solution:
+   - Check the validity of the solution and verify that the reasoning truly understands the core mathematical concepts and steps are naturally leading to the final answer.
+   - If the answer is correct, find potential shortcuts or assumptions the student used (e.g., memorized formulas without contextual analysis).
+   - If the answer is incorrect, diagnose the root misunderstanding (e.g., misapplying order of operations, misinterpreting units).
+
+3. Adversarial Modifications:
+   - The new problem may have modifications on variable names or values, linguistic structures, and scenarios.
+   - Rewrite the problem to integrate adversarial elements that can create fine-grained confusion or introduce subtle traps.
+   - Ensure that while the problem change, the underlying computational logic remains unchanged.
+
+4. Rebuild Context & Structure:
+   - Transplant the problem into a new real-world scenario (e.g., replace "bakery sales" with "bookstore inventory") if appropriate.
+   - Ensure that the new context still embeds the identified pitfalls within new question.
+
+5. Embed Pitfalls Strategically:
+   - Design the new problem to include elements or distractions that may have multiple interpretations or ambiguous meanings to prompt common mistakes or encourage reliance on shortcuts.
+   - Consider embedding potential edge cases or misleading hints by carefully selecting synonyms that challenge solvers.
+
+6. Validation Check:
+   - Confirm the adversarial problem:
+      -- Requires the same mathematical logic as the original.
+      -- Contains no contradictions or mismatched values.
+      -- Would trick memorization-based solvers but reward conceptual understanding.
+      -- The final answer remains {} through valid steps, even with linguistic changes.
+   - If validation fails, return: Error: Adversarial problem cannot satisfy constraints.
+
+Examples: Here are some examples with new problems proven to be able to expose student's error in mathmatical concept understanding or logical reasoning, in json format:
+
+Example 1:
+   Original Problem:
+      How many 3-letter sequences can be formed if the second letter must be a vowel (A, E, I, O, or U), and the third letter must be different from the first letter?
+   Adversarial Problem:
+      A 3-symbol license plate is designed where the first symbol must be a vowel (A, E, I, O, U) and the third symbol cannot match the second symbol. How many unique license plates can be created under these rules?
+
+Example 2:
+   Original Problem:
+      Pick two or fewer different digits from the set $\{1, 3, 6, 7\}$ and arrange them to form a number.  How many prime numbers can we create in this manner?
+   Adversarial Problem:
+      A librarian is organizing books labeled with digits {1, 2, 3, 7}. Each shelf holds books with either a single unique digit or a pair of distinct digits arranged as a number. How many shelves will contain books whose labels are prime numbers?
+
+Example 3:
+   Original Problem:
+      If a certain negative number is multiplied by six, the result is the  same as 20 less than the original number.  What is the value of the  original number?
+   Adversarial Problem:
+      A bank applies a fee that quintuples the negative balance of an account, which is now $16 less than the account's original balance. What was the original balance?
+
+Example 4:
+   Original Problem:
+      A company pays each of its employees $600 in a month. The company has a policy of increasing the salaries of each of its employees by 10% of the initial salary every year for those who've stayed in the company for five years. If Sylvie just clocked 5 years in the company last December, what's her annual salary after three more years of service?
+   Adversarial Problem:
+      A nonprofit organization provides a monthly allowance of $600 to volunteers who commit to five years of service. Upon completing five years, volunteers receive an annual increment of 10% of the initial monthly allowance for each subsequent year. If Anita completed her five-year commitment last August, what will her total annual allowance be after three additional years of service?
+
+Example 5:
+   Original Problem:
+      Carla is downloading a 200 GB file. Normally she can download 2 GB/minute, but 40% of the way through the download, Windows forces a restart to install updates, which takes 20 minutes. Then Carla has to restart the download from the beginning. How load does it take to download the file?
+   Adversarial Problem:
+      A factory robot is assembling a 400-unit device. Typically, it assembles 4 units/minute. When 40% of the device is built, a calibration error triggers a 20-minute shutdown. After resetting, the robot must restart assembly from scratch. How many minutes does the entire process take?
+
+Output Format:
+
+Your final output should be wrapped in the following tags:
+
+<new_problem>
+Insert your generated problem description here.
+[Insert adversarially modified problem here. Maintain the original’s structure, including line breaks, punctuation, and numbering.]
+</new_problem>
