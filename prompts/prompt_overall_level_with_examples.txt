@@ -48,9 +48,9 @@ Example 1:
 
 Example 2:
    Original Problem:
-      Pick two or fewer different digits from the set $\{1, 3, 6, 7\}$ and arrange them to form a number.  How many prime numbers can we create in this manner?
+      Pick two or fewer different digits from the set 1, 3, 6, 7 and arrange them to form a number.  How many prime numbers can we create in this manner?
    Adversarial Problem:
-      A librarian is organizing books labeled with digits {1, 2, 3, 7}. Each shelf holds books with either a single unique digit or a pair of distinct digits arranged as a number. How many shelves will contain books whose labels are prime numbers?
+      A librarian is organizing books labeled with digits 1, 2, 3, 7. Each shelf holds books with either a single unique digit or a pair of distinct digits arranged as a number. How many shelves will contain books whose labels are prime numbers?
 
 Example 3:
    Original Problem:
