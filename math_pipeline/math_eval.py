@@ -39,6 +39,9 @@ def parse_args():
     parser.add_argument("--end", default=-1, type=int)
     parser.add_argument("--temperature", default=0, type=float)
     parser.add_argument("--n_sampling", default=1, type=int)
+    parser.add_argument("--max_num_batched_tokens", default=250000, type=int)
+    parser.add_argument("--max_num_seqs", default=256, type=int)
+    parser.add_argument("--max_model_len", default=2048, type=int)
     parser.add_argument("--top_p", default=1, type=float)
     parser.add_argument("--max_tokens_per_call", default=2048, type=int)
     parser.add_argument("--shuffle", action="store_true")
@@ -135,8 +138,9 @@ def setup(args):
             tensor_parallel_size=len(available_gpus) // args.pipeline_parallel_size,
             pipeline_parallel_size=args.pipeline_parallel_size,
             trust_remote_code=True,
-            #max_num_seqs=189,  # Maximum number of sequences in a batch
-            max_num_batched_tokens = 250000,  # Maximum number of tokens in a batch
+            max_num_seqs=args.max_num_seqs,  # Maximum number of sequences in a batch
+            max_num_batched_tokens = args.max_num_batched_tokens,  # Maximum number of tokens in a batch
+            max_model_len=args.max_model_len # Maximum model context length
         )
         tokenizer = None
         if args.apply_chat_template:
@@ -407,7 +411,7 @@ def main(llm, tokenizer, data_name, args):
                     preds[j] = "".join(
                         [c for c in preds[j] if c in ["A", "B", "C", "D", "E"]]
                     )
-        sample.pop("prompt")
+        # sample.pop("prompt")
         if args.use_math_verify:
             sample.update({"code": code, "pred": preds, "report": reports, "parsed_pred": parsed_pred, "parsed_gt": parsed_gt})
         else:

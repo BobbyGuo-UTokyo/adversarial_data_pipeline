@@ -177,3 +177,7 @@ outputs/
 
 # env
 .env
+
+# server log
+*.out
+*.*nodeinfo
