@@ -42,6 +42,7 @@ import random
 from anthropic import Anthropic
 from typing import Dict, List
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Initialize Claude client
 
@@ -413,6 +414,7 @@ def parse_args():
     parser.add_argument("--use_safetensors", action="store_true")
     parser.add_argument("--use_math_verify", action="store_true")
     parser.add_argument("--num_shots", type=int, default=0)
+    parser.add_argument("--num_workers", type=int, default=1)
     parser.add_argument("--max_func_call", type=int, default=3)
     parser.add_argument(
         "--apply_chat_template",
@@ -559,6 +561,74 @@ def get_pred(text):
     return ""
 
 
+def process_single_sample(sample, model, args):
+    sample_succeeded = False
+    success_result = None
+    for ind_try in range(args.max_func_call):
+        try:
+            if isinstance(sample[args.answer_key], str):
+                original_answer = sample[args.answer_key]
+            elif isinstance(sample[args.answer_key], list):
+                assert len(sample[args.answer_key]) > 0
+                if len(sample[args.answer_key]) > 1:
+                    for answer, correctness in zip(sample[args.answer_key], sample["score"]):
+                        if correctness:
+                            original_answer = answer
+                            break
+                else:
+                    original_answer = sample[args.answer_key][0]
+            else:
+                raise ValueError(f"Sample {sample['idx']}, Attempt #{ind_try}. Invalid answer type: {type(sample[args.answer_key])}")
+
+            if args.prompt_file is not None:
+                response_llm = generate_adversarial_problem_given_prompt_file(
+                    model, sample['question'], original_answer, sample['gt'], args.prompt_file)
+            else:
+                response_llm = generate_adversarial_problem(
+                    model, sample['question'], original_answer, args.granularity_prompt, sample['gt'])
+
+            new_problem = extract_new_problem(response_llm['adversarial_question'])
+            adversarial_reasoning = response_llm['adversarial_reasoning']
+            response_llm_solution = generate_new_solution(model, new_problem, has_reasoning=True)
+            new_problem_solution = response_llm_solution['solution']
+            new_problem_reasoning = response_llm_solution['reasoning']
+
+            math_verified_correct = False
+            if args.use_math_verify:
+                try:
+                    pred = parse(new_problem_solution)
+                    math_verified_correct = verify(parse(sample["gt"]), pred)
+                    print(f"Sample {sample['idx']}, Attempt #{ind_try}. Verify with math_verify:\nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {parse(sample['gt'])}? {math_verified_correct}")
+                except:
+                    print(f"Sample {sample['idx']}, Attempt #{ind_try}. Verification with math_verify failed.")
+                    math_verified_correct = False
+
+            pred = get_pred(new_problem_solution)
+            verified_correct = math_equal_process((sample['idx'], pred, sample['gt']))
+            print(f"Sample {sample['idx']}, Attempt #{ind_try}. Verify with own verifier:\nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}? {verified_correct}")
+            verified_correct = verified_correct or math_verified_correct
+
+            if verified_correct:
+                sample_succeeded = True
+                print(f"Sample {sample['idx']}, Attempt #{ind_try}. New solution verification success!")
+                success_result = {
+                    "idx": sample["idx"],
+                    "response_llm": response_llm,
+                    "problem": sample['question'],
+                    "adversarial_reasoning": adversarial_reasoning,
+                    "new_problem": new_problem,
+                    "new_problem_solution": new_problem_solution,
+                    "new_problem_reasoning": new_problem_reasoning,
+                    "gt": sample["gt"],
+                }
+                break
+            else:
+                print(f"Sample {sample['idx']}, Attempt #{ind_try}. New solution verification failed.")
+        except Exception as e:
+            print(f"Error processing sample {sample['idx']}: {e}")
+    return success_result if sample_succeeded else None
+
+
 def main(attacker_model_name, tokenizer, data_name, args):
     examples, processed_samples, out_file = prepare_data(data_name, args)
     print(len(examples), len(gsm8k_correct), len(math_correct))
@@ -566,18 +636,12 @@ def main(attacker_model_name, tokenizer, data_name, args):
     print("data:", data_name, " ,remain samples:", len(examples))
     if len(examples) > 0:
         print(examples[0])
-    # init python executor
-    max_func_call = args.max_func_call
-    start_time = time.time()
-    # result_json = []
     result_dict = {}
 
     # Initialize DeepSeek model
     if attacker_model_name.startswith("VolcEngine"):
         assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
         model = supported_VLM[attacker_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
-    # Prepare output
-    # output_file = args.output_dir + f"/math/adversarial_{data_name}_{args.model_name_or_path.split('/')[-1]}_{args.split}.jsonl"
 
     # Initialize verifier models
     verifier_models = []
@@ -594,83 +658,26 @@ def main(attacker_model_name, tokenizer, data_name, args):
         os.makedirs(args.output_dir, exist_ok=True)
     # Iterate through examples
     with open(out_file, "w" if args.overwrite else "a") as f:
-        for sample in examples:
-            sample_succeeded = False
-            for ind_try in range(max_func_call):
-                try:
-                    # response_llm = generate_adversarial_problem(model, tokenizer, sample['question'], sample['answer'], sample['gt'])
-                    # response_llm = generate_adversarial_problem(model, sample['question'], sample['answer'], args.granularity_prompt, sample['gt'])
-                    # response_llm = generate_adversarial_problem_word_level(model, sample['question'], sample['answer'], sample['gt'])
-                    if isinstance(sample[args.answer_key], str):
-                        original_answer = sample[args.answer_key]
-                    elif isinstance(sample[args.answer_key], list):
-                        assert len(sample[args.answer_key]) > 0
-                        # Pick the first correct answer
-                        if len(sample[args.answer_key]) > 1:
-                            for answer, correctness in zip(sample[args.answer_key], sample["score"]):
-                                if correctness:
-                                    original_answer = answer
-                                    break
-                        # Only one answer
-                        else:
-                            original_answer = sample[args.answer_key][0]
-                    else:
-                        raise ValueError(f"Invalid answer type: {type(sample[args.answer_key])}")
-                    if args.prompt_file is not None:
-                        response_llm = generate_adversarial_problem_given_prompt_file(model, sample['question'], original_answer, sample['gt'], args.prompt_file)
-                    else:
-                        response_llm = generate_adversarial_problem(model, sample['question'], original_answer, args.granularity_prompt, sample['gt'])
-                    new_problem = extract_new_problem(response_llm['adversarial_question'])
-                    adversarial_reasoning = response_llm['adversarial_reasoning']
-                    # response_llm_solution = generate_new_solution(model, tokenizer, new_problem, sample['answer'], sample['gt'])
-                    # response_llm_solution = generate_new_solution(model, new_problem, sample['answer'], sample['gt'])
-                    response_llm_solution = generate_new_solution(model, new_problem, has_reasoning=True)
-                    new_problem_solution = response_llm_solution['solution']
-                    new_problem_reasoning = response_llm_solution['reasoning']
-                    #new_problem_solution = extract_new_problem_solution(response_llm['adversarial_question'])
-                    # # Verify the new problem solution with verifier models
-                    # verifier_solutions = []
-                    # for verifier_model in verifier_models:
-                    #     verifier_response = generate_new_solution(verifier_model, new_problem)
-                    #     verifier_pred = get_pred(verifier_response['solution'])
-                    #     if not verify(parse(sample["gt"]), parse(verifier_pred)):
-                    #         print(f"Verifier {verifier_model.__class__.__name__} failed to verify the new problem solution.")
-                    #         break
-                    # verified_correct = True
-                    # Using math_verify
-                    math_verified_correct = False
-                    if args.use_math_verify:
-                        pred = parse(new_problem_solution)
-                        math_verified_correct = verify(parse(sample["gt"]), pred)
-                        print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {parse(sample['gt'])}?")
-                    # Own impelementation
-                    pred = get_pred(new_problem_solution) #extract_final_answer(new_problem_solution)
-                    print(f"Try {ind_try}: \noriginal_question: {sample['question']} \n{response_llm['adversarial_question']} \nnew problem\n{new_problem} \nnew problem solution: \n{new_problem_solution} \n{pred} == {sample['gt']}?")
-                    verified_correct = math_equal_process((sample['idx'], pred, sample['gt']))
-                    # Combine math_verify and own implementation information
-                    verified_correct = verified_correct or math_verified_correct
-                    if verified_correct:
-                        sample_succeeded = True
-                        print("Success")
-                        success_result = {
-                            "idx": sample["idx"],
-                            "response_llm": response_llm,
-                            "problem": sample['question'],
-                            "adversarial_reasoning": adversarial_reasoning,
-                            "new_problem": new_problem,
-                            "new_problem_solution": new_problem_solution,
-                            "new_problem_reasoning": new_problem_reasoning,
-                            "gt": sample["gt"],
-                        }
-                        result_dict[sample["idx"]] = success_result
-                        break
-                    else:
-                        print("Fail")
-                except Exception as e:
-                    print(e)
-            if sample_succeeded:
-                f.write(json.dumps(success_result) + "\n")
-    print(f"Total examples of adversarial {data_name}: {len(result_dict)}")
+        if args.num_workers > 1:
+            with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+                future_to_sample = {
+                    executor.submit(process_single_sample, sample, model, args): sample 
+                    for sample in examples
+                }
+                for future in as_completed(future_to_sample):
+                    result = future.result()
+                    if result is not None:
+                        result_dict[result["idx"]] = result
+                        f.write(json.dumps(result) + "\n")
+                        f.flush()
+        else:
+            for sample in examples:
+                success_result = process_single_sample(sample, model, args)
+                if success_result is not None:
+                    result_dict[sample["idx"]] = success_result
+                    f.write(json.dumps(success_result) + "\n")
+                    f.flush()
+    print(f"Total successful adversarial attacks {data_name}: {len(result_dict)}")
     print(f"Save to {out_file}")
       
     return list(result_dict.values())
