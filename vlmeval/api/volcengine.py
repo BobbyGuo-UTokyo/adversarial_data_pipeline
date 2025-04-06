@@ -9,7 +9,6 @@ APIBASES = {
 }
 
 
-
 class VolcEngineWrapper(BaseAPI):
 
     is_api: bool = True
@@ -196,3 +195,9 @@ class VolcDeepSeekR1(VolcEngineWrapper):
         result = super(VolcDeepSeekR1, self).generate(message)
         answer, reasoning = result
         return answer, reasoning
+
+class VolcDoubao(VolcEngineWrapper):
+    def generate(self, message, dataset=None):
+        result = super(VolcDoubao, self).generate(message)
+        answer = result
+        return answer

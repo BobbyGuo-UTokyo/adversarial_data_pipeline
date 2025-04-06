@@ -1,4 +1,5 @@
 from vlmeval.api import *
+from vlmeval.vlm import *
 from functools import partial
 
 
@@ -26,14 +27,14 @@ api_models = {
     'Claude3-5V_Sonnet_20241022': partial(Claude3V, model='claude-3-5-sonnet-20241022', temperature=0, retry=10, verbose=False),
     # VolcEngine
     'VolcEngine_DeepSeekR1': partial(VolcDeepSeekR1, model='endpoint_id', has_reasoning=True, temperature=0, retry=3, verbose=False),
+    'VolcEngine_Doubao-1.5-pro-32k': partial(VolcDoubao, model='doubao-1-5-pro-32k-250115', has_reasoning=False, temperature=0, retry=3, verbose=False),
 }
 
 supported_VLM = {}
 
 model_groups = [
-    api_models,
+    api_models
 ]
 
 for grp in model_groups:
     supported_VLM.update(grp)
-

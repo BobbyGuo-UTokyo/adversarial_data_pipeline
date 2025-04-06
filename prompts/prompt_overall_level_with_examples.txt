@@ -38,7 +38,7 @@ Steps to Generate Adversarial Problem:
       -- The final answer remains {} through valid steps, even with linguistic changes.
    - If validation fails, return: Error: Adversarial problem cannot satisfy constraints.
 
-Examples: Here are some examples with new problems proven to be able to expose student's error in mathmatical concept understanding or logical reasoning, in json format:
+Examples: Here are some examples with new problems proven to be able to expose student's error in mathmatical concept understanding or logical reasoning:
 
 Example 1:
    Original Problem:
