@@ -19,6 +19,7 @@ Steps to Generate Adversarial Problem:
 
 3. Adversarial Modifications:
    - The new problem may have modifications on variable names or values, linguistic structures, and scenarios.
+   - If there is a variable in original answer like "1-x", the corresponding variable name "x" should not be changed in the new question.
    - Rewrite the problem to integrate adversarial elements that can create fine-grained confusion or introduce subtle traps.
    - Ensure that while the problem change, the underlying computational logic remains unchanged.
 
