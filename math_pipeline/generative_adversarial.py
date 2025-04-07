@@ -391,7 +391,7 @@ def parse_args():
     parser.add_argument("--attacker_model_name_or_path", default="VolcEngine_DeepSeekR1", type=str)
     parser.add_argument("--original_model_name_or_path", default="Qwen/Qwen2.5-Math-7B-Instruct", type=str)
     parser.add_argument("--verifier_model_names", default=["VolcEngine_DeepSeekR1"], type=str, nargs="+")
-    parser.add_argument("--endpoint_id", default='ep-20250216235228-69vhs', type=str)
+    parser.add_argument("--endpoint_id", default=None, type=str)
     parser.add_argument("--output_dir", default="./output_adversarial", type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
     parser.add_argument("--granularity_prompt", default="Mainly modify variable names like item names or person names and try to keep other things unchanged", type=str)

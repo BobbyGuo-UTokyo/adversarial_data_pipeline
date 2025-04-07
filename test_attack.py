@@ -1,5 +1,5 @@
 from vlmeval.config import supported_VLM
-model = supported_VLM['VolcEngine_DeepSeekR1'](model='ep-20250216235228-69vhs', has_reasoning=True, temperature=0, retry=3, verbose=False)
+model = supported_VLM['VolcEngine_DeepSeekR1'](model='', has_reasoning=True, temperature=0, retry=3, verbose=False)
 
 original_question = "In Heidi's history class, the only grades that count toward the semester average are the $6$ tests she has already taken and the upcoming final exam. The final exam counts as two tests. Heidi has determined that if she earns $99$ points on the final she will have exactly a $90$-point average for the semester. On average, how many points has Heidi scored on each test prior to the final exam?"
 original_answer = "87"
