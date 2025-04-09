@@ -20,11 +20,14 @@ huggingface-cli login --token $HF_TOKEN
 export CUDA_VISIBLE_DEVICES=0,1
 
 # Scripts
-# sh scripts/initial_test_qwen25_math_7b.sh
+sh scripts/initial_test_qwen25_math_7b.sh
 # sh scripts/initial_test_qwen25_math_1_5b.sh
-sh scripts/initial_test_llama_31_8b.sh
+# sh scripts/initial_test_llama_31_8b.sh
 # sh scripts/initial_test_finemath_llama_3b.sh
 # sh scripts/initial_test_mathstral_7b_v01.sh
-sh scripts/initial_test_gemma3_1b.sh
-sh scripts/initial_test_gemma3_4b.sh
-sh scripts/initial_test_gemma3_12b.sh
+# sh scripts/initial_test_gemma3_1b.sh
+# sh scripts/initial_test_gemma3_4b.sh
+# sh scripts/initial_test_gemma3_12b.sh
+# sh scripts/initial_test_numamath_7b.sh
+# sh scripts/initial_test_phi35_mini_instruct.sh
+# sh scripts/initial_test_deepseek_math_7b_rl.sh

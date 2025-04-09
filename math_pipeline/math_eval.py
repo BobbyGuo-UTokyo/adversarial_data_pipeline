@@ -72,7 +72,8 @@ def parse_args():
 
 def prepare_data(data_name, args):
     if args.test_adversarial_generation:
-        adversarial_generation_file_path = os.path.join(args.data_dir, data_name, args.adversarial_generation_file_name)
+        model_name = "/".join(args.model_name_or_path.split("/")[-1:])
+        adversarial_generation_file_path = os.path.join(args.data_dir, data_name, model_name, args.adversarial_generation_file_name)
         assert os.path.isfile(adversarial_generation_file_path), f"Adversarial generation file {adversarial_generation_file_path} not found"
         examples = list(load_jsonl(adversarial_generation_file_path))
     else:
