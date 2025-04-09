@@ -7,10 +7,14 @@ def process_data(args):
     assert len(args.adversarial_generation_files) == len(args.test_result_files)
     for ad_f, t_f in zip(args.adversarial_generation_files, args.test_result_files):
         ad_df = pd.read_json(ad_f, orient="records", lines=True).set_index("idx")
+        ad_df = ad_df.rename(columns={"question": "original_question", "answer": "original_answer", "solution": "original_solution", "gt_cot": "original_gt_cot", "prompt": "original_prompt", "code": "original_code", "pred": "original_pred", "report": "original_report", "parsed_pred": "original_parsed_pred", "parsed_gt": "original_parsed_gt", "score": "original_score"})
+        ad_df = ad_df.drop(columns=["is_adversarial_generation"])
         t_df = pd.read_json(t_f, orient="records", lines=True).set_index("idx").drop(columns=["gt"])
-        output_df = ad_df.join(t_df, how="left").reset_index().drop_duplicates(subset=["idx"])
+        # output_df = ad_df.join(t_df, how="left").reset_index().drop_duplicates(subset=["idx"])
+        output_df = t_df.join(ad_df, how="left").reset_index().drop_duplicates(subset=["idx"])
         output_file = t_f.replace(".jsonl", "_inspection.xlsx")
         output_df.to_excel(output_file, index=False)
+        print(output_file)
 
 def parse_args():
     import argparse
