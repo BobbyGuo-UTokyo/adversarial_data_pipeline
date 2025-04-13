@@ -116,7 +116,7 @@ def evaluate_without_gtcot(data_name, prompt_type, samples: list=None, file_path
 
 
 def math_verify_param(param):
-    return verify(param[0], param[1])
+    return verify(param[0], param[1]) or math_equal_process(param[-2:])
 
 
 def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, max_num_samples=None, execute=False, use_math_verify=False):
@@ -135,7 +135,9 @@ def evaluate(data_name, prompt_type, samples: list=None, file_path: str=None, ma
     
     # parse gt
     if use_math_verify:
-        params = [(sample['parsed_pred'], sample['parsed_gt']) for sample in samples]
+        for sample in samples:
+            sample['gt_cot'], sample['gt'] = parse_ground_truth(sample, data_name)
+        params = [(sample['parsed_pred'], sample['parsed_gt'], idx, pred, sample['gt']) for idx, sample in enumerate(samples) for pred in sample['pred']]
     else:
         for sample in samples:
             sample['gt_cot'], sample['gt'] = parse_ground_truth(sample, data_name)
