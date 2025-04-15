@@ -94,7 +94,6 @@ def generate_adversarial_problem(model, question: str, model_answer: str, granul
 def generate_adversarial_problem_given_prompt_file(model, question: str, model_answer: str, gt: str, prompt_file: str) -> Dict:
     """Generate an adversarial math problem using API"""
     
-    lines = open(prompt_file).readlines()
     prompt = "\n".join(open(prompt_file).readlines()).format(question, gt, model_answer, gt)
     response, reasoning = model.generate(prompt)
 
@@ -388,9 +387,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_names", default="gsm8k,math", type=str)
     parser.add_argument("--data_dir", default="./data", type=str)
-    parser.add_argument("--attacker_model_name_or_path", default="VolcEngine_DeepSeekR1", type=str)
+    parser.add_argument("--attacker_model_name_or_path", default="DeepSeekR1", type=str)
     parser.add_argument("--original_model_name_or_path", default="Qwen/Qwen2.5-Math-7B-Instruct", type=str)
-    parser.add_argument("--verifier_model_names", default=["VolcEngine_DeepSeekR1"], type=str, nargs="+")
+    parser.add_argument("--verifier_model_names", default=["DeepSeekR1"], type=str, nargs="+")
     parser.add_argument("--endpoint_id", default=None, type=str)
     parser.add_argument("--output_dir", default="./output_adversarial", type=str)
     parser.add_argument("--prompt_type", default="tool-integrated", type=str)
@@ -398,7 +397,7 @@ def parse_args():
     parser.add_argument("--prompt_file", default=None, type=str)
     parser.add_argument("--split", default="test", type=str)
     parser.add_argument("--postfix", default="", type=str)
-    parser.add_argument("--answer_key", default="answer", type=str)
+    parser.add_argument("--answer_key", default="code", type=str)
     parser.add_argument("--num_test_sample", default=-1, type=int)  # -1 for full data
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--start", default=0, type=int)
@@ -642,6 +641,8 @@ def main(attacker_model_name, tokenizer, data_name, args):
     if attacker_model_name.startswith("VolcEngine"):
         assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
         model = supported_VLM[attacker_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
+    else:
+        model = supported_VLM[attacker_model_name]()
 
     # Initialize verifier models
     verifier_models = []
