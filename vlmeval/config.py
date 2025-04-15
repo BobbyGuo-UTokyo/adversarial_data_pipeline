@@ -1,5 +1,5 @@
 from vlmeval.api import *
-from vlmeval.vlm import *
+# from vlmeval.vlm import *
 from functools import partial
 
 
@@ -28,6 +28,9 @@ api_models = {
     # VolcEngine
     'VolcEngine_DeepSeekR1': partial(VolcDeepSeekR1, model='endpoint_id', has_reasoning=True, temperature=0, retry=3, verbose=False),
     'VolcEngine_Doubao-1.5-pro-32k': partial(VolcDoubao, model='doubao-1-5-pro-32k-250115', has_reasoning=False, temperature=0, retry=3, verbose=False),
+    # DeepSeek
+    'DeepSeekR1': partial(DeepSeekR1, model='deepseek-reasoner', has_reasoning=True, temperature=0, retry=3, verbose=False),
+    'DeepSeekV3': partial(DeepSeekV3, model='deepseek-chat', has_reasoning=False, temperature=0, retry=3, verbose=False)
 }
 
 supported_VLM = {}
