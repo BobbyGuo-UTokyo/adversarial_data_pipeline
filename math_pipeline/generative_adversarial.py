@@ -403,7 +403,7 @@ def parse_args():
     parser.add_argument("--start", default=0, type=int)
     parser.add_argument("--end", default=-1, type=int)
     parser.add_argument("--temperature", default=0, type=float)
-    parser.add_argument("--n_sampling", default=1, type=int)
+    parser.add_argument("--retry", default=3, type=int)
     parser.add_argument("--top_p", default=1, type=float)
     parser.add_argument("--max_tokens_per_call", default=2048, type=int)
     parser.add_argument("--shuffle", action="store_true")
@@ -640,19 +640,19 @@ def main(attacker_model_name, tokenizer, data_name, args):
     # Initialize DeepSeek model
     if attacker_model_name.startswith("VolcEngine"):
         assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
-        model = supported_VLM[attacker_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
+        model = supported_VLM[attacker_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=args.retry, verbose=False)
     else:
-        model = supported_VLM[attacker_model_name]()
+        model = supported_VLM[attacker_model_name](retry=args.retry, verbose=False)
 
     # Initialize verifier models
     verifier_models = []
     for verifier_model_name in args.verifier_model_names:
         if verifier_model_name.startswith("VolcEngine"):
             assert args.endpoint_id is not None and isinstance(args.endpoint_id, str)
-            verifier_model = supported_VLM[verifier_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=3, verbose=False)
+            verifier_model = supported_VLM[verifier_model_name](model=args.endpoint_id, has_reasoning=True, temperature=0, retry=args.retry, verbose=False)
             verifier_models.append(verifier_model)
         else:
-            verifier_model = supported_VLM[verifier_model_name]()
+            verifier_model = supported_VLM[verifier_model_name](retry=args.retry, verbose=False)
 
     # Create output directory if it doesn't exist
     if not os.path.exists(args.output_dir):
