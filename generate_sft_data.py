@@ -4,6 +4,9 @@ import pandas as pd
 
 def generate_sft_data(args):
     df = pd.read_excel(args.input_file)
+    answer_str = " The answer is $\\boxed{{{}}}"
+    if "original_solution" not in df.columns: # for gsm8k
+        df["original_solution"] = df.apply(lambda x: x["original_answer"].split("####")[0] + answer_str.format(x["original_answer"].split("####")[1].strip()), axis=1)
     potential_outputs = {
         "original_pos": df[df.apply(lambda x: json.loads(x["score"].lower())[0], axis=1)].rename(columns={"original_question": "sft_prompt", "original_solution": "sft_response"}),
         "original_neg": df[df.apply(lambda x: not json.loads(x["score"].lower())[0], axis=1)].rename(columns={"original_question": "sft_prompt", "original_solution": "sft_response"}),
