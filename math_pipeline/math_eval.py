@@ -75,7 +75,10 @@ def prepare_data(data_name, args):
         model_name = "/".join(args.model_name_or_path.split("/")[-1:])
         if model_name.startswith("sft"):
             model_name = "/".join(args.model_name_or_path.split("/")[-2:-1])
-        adversarial_generation_file_path = os.path.join(args.data_dir, data_name, model_name, args.adversarial_generation_file_name)
+        if not os.path.isfile(args.adversarial_generation_file_name):
+            adversarial_generation_file_path = os.path.join(args.data_dir, data_name, model_name, args.adversarial_generation_file_name)
+        else:
+            adversarial_generation_file_path = args.adversarial_generation_file_name
         assert os.path.isfile(adversarial_generation_file_path), f"Adversarial generation file {adversarial_generation_file_path} not found"
         examples = list(load_jsonl(adversarial_generation_file_path))
     else:
@@ -98,14 +101,23 @@ def prepare_data(data_name, args):
     output_dir = args.output_dir
     if not os.path.exists(output_dir):
         output_dir = f"outputs/{output_dir}"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    model_name = "/".join(args.model_name_or_path.split("/")[-1:])
     if args.output_name is None:
         dt_string = datetime.now().strftime("%m-%d_%H-%M")
-        model_name = "/".join(args.model_name_or_path.split("/")[-1:])
         out_file_prefix = f"{args.split}_{args.prompt_type}_{args.num_test_sample}_seed{args.seed}_t{args.temperature}"
-        out_file = f"{output_dir}/{data_name}/{model_name}/{out_file_prefix}_s{args.start}_e{args.end}.jsonl"
+        if model_name not in output_dir:
+            out_file = f"{output_dir}/{data_name}/{model_name}/{out_file_prefix}_s{args.start}_e{args.end}.jsonl"
+        else:
+            out_file = f"{output_dir}/{out_file_prefix}_s{args.start}_e{args.end}.jsonl"
     else:
-        out_file = f"{output_dir}/{data_name}/{model_name}/{args.output_name.replace('.jsonl', '')}.jsonl"
-    os.makedirs(f"{output_dir}/{data_name}/{model_name}", exist_ok=True)
+        if model_name not in output_dir:
+            out_file = f"{output_dir}/{data_name}/{model_name}/{args.output_name.replace('.jsonl', '')}.jsonl"
+        else:
+            out_file = f"{output_dir}/{args.output_name.replace('.jsonl', '')}.jsonl"
+    if model_name not in output_dir:
+        os.makedirs(f"{output_dir}/{data_name}/{model_name}", exist_ok=True)
 
 
     # load all processed samples
