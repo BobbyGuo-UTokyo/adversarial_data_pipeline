@@ -30,6 +30,17 @@ def generate_sft_data(args):
                 original_sample_num = len(potential_outputs[sample_type])
                 potential_outputs[sample_type] = potential_outputs[sample_type].sample(frac=args.resample_neg, replace=True if args.resample_neg > 1.0 else False, random_state=42)
                 print(f"Resampled {len(potential_outputs[sample_type])} negative samples from {original_sample_num} {sample_type} data")
+    robustness_sample_indices = {"sampled_train": [], "sampled_test": []}
+    if args.split_robustness > 0:
+        for sample_type in all_sample_types:
+            if "adversarial_neg" in sample_type:
+                original_sample_num = len(potential_outputs[sample_type])
+                robustness_sampled_train = potential_outputs[sample_type].sample(frac=args.split_robustness, replace=False, random_state=42)
+                robustness_sample_indices["sampled_train"].extend(robustness_sampled_train["idx"].tolist())
+                # record unsampled as test
+                robustness_sample_indices["sampled_test"].extend(potential_outputs[sample_type]["idx"][~potential_outputs[sample_type]["idx"].isin(robustness_sampled_train["idx"])].tolist())
+                potential_outputs[sample_type] = robustness_sampled_train
+                print(f"Splitted {len(potential_outputs[sample_type])} adversarial_neg samples from {original_sample_num} {sample_type} data for rubustness evaluation as: {len(potential_outputs[sample_type])} train and {len(robustness_sample_indices['sampled_test'])} test")
     output_df = pd.concat([potential_outputs[sample_type] for sample_type in all_sample_types])
     for sample_type in all_sample_types:
         print(f"Using {len(potential_outputs[sample_type])} {sample_type} samples")
@@ -48,6 +59,10 @@ def generate_sft_data(args):
         output_name += "_continue_pretrain"
     if args.resample_neg > 0:
         output_name += f"_resample_neg_{args.resample_neg}".replace(".", "_")
+    if args.split_robustness > 0:
+        output_name += f"_split_robustness_{args.split_robustness}".replace(".", "_")
+        with open(os.path.join(output_dir, output_name + "_sample_indices.json"), "w") as f:
+            json.dump(robustness_sample_indices, f, indent="\t")
     output_name += "." + os.path.basename(args.output_file).split(".")[1]
     output_file = os.path.join(output_dir, output_name)
     output_df.to_json(output_file, orient="records", lines=True)
@@ -62,6 +77,7 @@ if __name__ == "__main__":
     parser.add_argument("--extra_input_files", type=str, nargs="+", default=[])
     parser.add_argument("--extra_input_sample_types", type=str, nargs="+", default=[])
     parser.add_argument("--continue_pretrain", action="store_true")
+    parser.add_argument("--split_robustness", type=float, default=-1.0, help="split robustness, negative means no split")
     parser.add_argument("--resample_neg", type=float, default=-1, help="resample negative samples to the given ratio, negative means no resample")
     args = parser.parse_args()
     
