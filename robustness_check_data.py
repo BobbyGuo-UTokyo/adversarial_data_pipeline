@@ -15,7 +15,7 @@ def generate_robustness_check_data(args):
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir) # create output directory if not exists
     selected_outputs = potential_outputs[args.indices_sample_type]
-    selected_indices = json.load(open(args.indices_file))["sampled_test"]
+    selected_indices = json.load(open(args.indices_file))[args.output_key]
     selected_outputs = selected_outputs[selected_outputs["idx"].isin(selected_indices)]
     print(f"Loaded {len(selected_outputs)} {args.indices_sample_type} samples from {args.input_file}")
     output_name = os.path.basename(args.output_file).split(".")[0] + f"_{args.indices_sample_type}.jsonl"
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--input_file", type=str, required=True)
     parser.add_argument("--indices_sample_type", type=str, required=True)
     parser.add_argument("--indices_file", type=str, required=True)
+    parser.add_argument("--output_key", type=str, default="sampled_test")
     parser.add_argument("--output_file", type=str, required=True)
     args = parser.parse_args()
     
