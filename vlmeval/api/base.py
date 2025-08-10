@@ -279,7 +279,7 @@ class BaseAPI:
         if not self.has_reasoning:
             return self.fail_msg if answer in ['', None] else answer
         else:
-            return self.fail_msg, '' if answer in ['', None] else answer, reasoning
+            return self.fail_msg if answer in ['', None] else answer, reasoning
 
     def message_to_promptimg(self, message, dataset=None):
         assert not self.INTERLEAVE

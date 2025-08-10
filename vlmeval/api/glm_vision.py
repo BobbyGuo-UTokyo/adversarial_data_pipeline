@@ -18,7 +18,7 @@ class GLMVisionWrapper(BaseAPI):
                  system_prompt: str = None,
                  temperature: float = 1.0,
                  timeout: int = 60,
-                 max_tokens: int = 4096,
+                 max_tokens: int = 8192,
                  has_reasoning: bool = False,
                  proxy: str = None,
                  **kwargs):
@@ -26,6 +26,7 @@ class GLMVisionWrapper(BaseAPI):
         from zhipuai import ZhipuAI
         self.model = model
         self.temperature = temperature
+        self.max_tokens = max_tokens
         self.has_reasoning = has_reasoning
         self.fail_msg = 'Failed to obtain answer via API. '
         if key is None:
@@ -60,7 +61,7 @@ class GLMVisionWrapper(BaseAPI):
             model=self.model,
             messages=messages,
             do_sample=False,
-            max_tokens=2048,
+            max_tokens=self.max_tokens,
             temperature=self.temperature,
             thinking={
                 "type": "enabled" if self.has_reasoning else "disabled",
@@ -90,4 +91,10 @@ class GLMVisionWrapper(BaseAPI):
 
 class GLMVisionAPI(GLMVisionWrapper):
     def generate(self, message, dataset=None):
-        return super(GLMVisionAPI, self).generate(message, dataset=dataset)
+        result = super(GLMVisionAPI, self).generate(message, dataset=dataset)
+        if self.has_reasoning:
+            answer, reasoning = result
+            return answer, reasoning
+        else:
+            answer = result
+            return answer
