@@ -32,7 +32,7 @@ api_models = {
     'DeepSeekR1': partial(DeepSeekR1, model='deepseek-reasoner', has_reasoning=True, temperature=0, retry=3, verbose=False),
     'DeepSeekV3': partial(DeepSeekV3, model='deepseek-chat', has_reasoning=False, temperature=0, retry=3, verbose=False),
     # GLM
-    'GLM-4.5': partial(GLMVisionAPI, model='glm-4.5', has_reasoning=False, temperature=0, retry=3, verbose=False, timeout=60),
+    'GLM-4.5': partial(GLMVisionAPI, model='glm-4.5', has_reasoning=True, temperature=0, retry=3, verbose=False, timeout=60),
 }
 
 supported_VLM = {}
